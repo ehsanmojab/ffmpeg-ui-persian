@@ -34,7 +34,8 @@ class FFmpegGUI(ctk.CTk):
         ctk.CTkLabel(input_frame, text="فایل ورودی:").pack(side="left", padx=5)
         self.input_entry = ctk.CTkEntry(input_frame, textvariable=self.input_file_path, width=350)
         self.input_entry.pack(side="left", expand=True, fill="x", padx=5)
-        ctk.CTkButton(input_frame, text="انتخاب فایل", command=self.select_input_file).pack(side="left", padx=5)
+        self.select_input_button = ctk.CTkButton(input_frame, text="انتخاب فایل", command=self.select_input_file)
+        self.select_input_button.pack(side="left", padx=5)
 
         self.operation_frame = ctk.CTkFrame(main_frame) # Defined here
         self.operation_frame.pack(pady=10, padx=10, fill="x") # Packed here
@@ -49,7 +50,8 @@ class FFmpegGUI(ctk.CTk):
         ctk.CTkLabel(self.output_widgets_frame, text="فایل خروجی:").pack(side="left", padx=5)
         self.output_entry = ctk.CTkEntry(self.output_widgets_frame, textvariable=self.output_file_path, width=350)
         self.output_entry.pack(side="left", expand=True, fill="x", padx=5)
-        ctk.CTkButton(self.output_widgets_frame, text="انتخاب مسیر", command=self.select_output_file).pack(side="left", padx=5)
+        self.select_output_button = ctk.CTkButton(self.output_widgets_frame, text="انتخاب مسیر", command=self.select_output_file)
+        self.select_output_button.pack(side="left", padx=5)
 
         self.options_frame = ctk.CTkScrollableFrame(main_frame, fg_color="transparent", height=350)
         # self.options_frame is packed in update_options_ui relative to main_frame children
@@ -90,7 +92,7 @@ class FFmpegGUI(ctk.CTk):
                         messagebox.showerror("خطا", "ffprobe.exe انتخاب نشد. عملکرد برنامه ناقص خواهد بود.")
                         self.quit()
             else:
-                messagebox.showerror("خطا", "FFmpeg انتخاب نشد. لطفاً FFmpeg را نصب کرده و در PATH قرار دهید یا مسیر آن را به برنامه بدهید.")
+                messagebox.showerror("خطا", "FFmpeg انتخاب نشد. لطفاً FFmpeg را نصب کرده و در PATH قرار دهید یا مسیر آن را به برنامه بدهید."[...])
                 self.quit()
 
     def select_input_file(self):
@@ -241,6 +243,30 @@ class FFmpegGUI(ctk.CTk):
             self.audio_bitrate_label.pack_forget()
             self.audio_bitrate_entry.pack_forget()
 
+    def _toggle_ui(self, enabled: bool, exclude: list = None):
+        """
+        Recursively enable/disable interactive widgets.
+        exclude: list of widget instances to skip (they will not be changed).
+        """
+        if exclude is None:
+            exclude = []
+        state = "normal" if enabled else "disabled"
+
+        def recurse(widget):
+            for child in widget.winfo_children():
+                if child in exclude:
+                    # skip excluded widgets
+                    recurse(child)
+                    continue
+                try:
+                    # Try to set state for widgets that support it; ignore exceptions
+                    child.configure(state=state)
+                except Exception:
+                    # widget might not support 'state' (e.g., Frames, Labels) — ignore
+                    pass
+                recurse(child)
+
+        recurse(self)
 
     def build_ffmpeg_command(self):
         input_f = self.input_file_path.get()
@@ -330,9 +356,13 @@ class FFmpegGUI(ctk.CTk):
             return
 
         self.status_label.configure(text="وضعیت: در حال پردازش...")
+        # ensure execute button is disabled and then disable other interactive widgets
+        self.execute_button.configure(state="disabled")
+        # exclude widgets that should remain enabled/visible (progress/status)
+        self._toggle_ui(False, exclude=[self.execute_button, self.progress_bar, self.status_label])
+
         self.progress_bar.pack(pady=10, padx=10, fill="x", in_=self.status_label.master)
         self.progress_bar.start()
-        self.execute_button.configure(state="disabled")
 
         thread = threading.Thread(target=self.run_command_in_thread, args=(cmd_list, self.operation_var.get()))
         thread.daemon = True
@@ -389,7 +419,13 @@ class FFmpegGUI(ctk.CTk):
     def _finalize_ui_after_process(self):
         self.progress_bar.stop()
         self.progress_bar.pack_forget()
-        self.execute_button.configure(state="normal")
+        # Re-enable previously disabled widgets. keep progress/status as they are.
+        self._toggle_ui(True, exclude=[self.progress_bar, self.status_label])
+        # Ensure execute button is enabled again
+        try:
+            self.execute_button.configure(state="normal")
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     app = FFmpegGUI()
