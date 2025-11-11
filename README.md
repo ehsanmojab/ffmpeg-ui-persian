@@ -36,9 +36,8 @@ FFmpeg یک برنامه برای کارهای مختلفه ؛ یکی از اس�
 1.  **دریافت پروژه:**
     مخزن را کلون نمایید یا فایل اصلی برنامه (مثلاً `ffmpeg_gui.py`) را دانلود کنید.
     ```bash
-    # USERNAME/REPOSITORY را با اطلاعات صحیح جایگزین کنید
-    git clone [https://github.com/USERNAME/REPOSITORY.git](https://github.com/USERNAME/REPOSITORY.git)
-    cd REPOSITORY
+    git clone [https://github.com/M9STAFA/ffmpeg-ui-persian.git]
+    cd ffmpeg-ui-persian
     ```
 2.  **نصب کتابخانه پایتون مورد نیاز:**
     ```bash
@@ -83,4 +82,3 @@ FFmpeg یک برنامه برای کارهای مختلفه ؛ یکی از اس�
 ## لایسنس
 
 این پروژه تحت مجوز [MIT License](LICENSE.txt) منتشر شده است.
-(متن کامل مجوز در فایل `LICENSE.txt` قابل مشاهده است. لطفاً اطلاعات کپی‌رایت مربوط به خود را در آن فایل درج نمایید.)
